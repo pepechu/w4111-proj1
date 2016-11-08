@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#/usr/bin/env python2.7
 
 """
 Columbia's COMS W4111.001 Introduction to Databases
@@ -24,8 +24,9 @@ app = Flask(__name__, template_folder=tmpl_dir)
 
 
 #
-# The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
-#
+# The following is a dummy URI that does not connect to a valid database. 
+#You will need to modify it to connect to your Part 2 database in order to use the data.
+
 # XXX: The URI should be in the format of: 
 #
 #     postgresql://USER:PASSWORD@w4111a.eastus.cloudapp.azure.com/proj1part2
@@ -44,13 +45,14 @@ engine = create_engine(DATABASEURI)
 
 #
 # Example of running queries in your database
-# Note that this will probably not work if you already have a table named 'test' in your database, containing meaningful data. This is only an example showing you how to run queries in your database using SQLAlchemy.
-#
-engine.execute("""CREATE TABLE IF NOT EXISTS test (
-  id serial,
-  name text
-);""")
-engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
+# Note that this will probably not work if you already have a table named 'test' in your database, containing meaningful data. 
+#This is only an example showing you how to run queries in your database using SQLAlchemy.
+#engine.execute("""CREATE TABLE IF NOT EXISTS test (
+#  id serial,
+#  name text
+#);""")
+#engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
+
 
 
 @app.before_request
@@ -96,63 +98,7 @@ def teardown_request(exception):
 #
 @app.route('/')
 def index():
-  """
-  request is a special object that Flask provides to access web request information:
-
-  request.method:   "GET" or "POST"
-  request.form:     if the browser submitted a form, this contains the data in the form
-  request.args:     dictionary of URL arguments, e.g., {a:1, b:2} for http://localhost?a=1&b=2
-
-  See its API: http://flask.pocoo.org/docs/0.10/api/#incoming-request-data
-  """
-
-  # DEBUG: this is debugging code to see what request looks like
-  print request.args
-
-
-  #
-  # example of a database query
-  #
-  cursor = g.conn.execute("SELECT name FROM test")
-  names = []
-  for result in cursor:
-    names.append(result['name'])  # can also be accessed using result[0]
-  cursor.close()
-
-  #
-  # Flask uses Jinja templates, which is an extension to HTML where you can
-  # pass data to a template and dynamically generate HTML based on the data
-  # (you can think of it as simple PHP)
-  # documentation: https://realpython.com/blog/python/primer-on-jinja-templating/
-  #
-  # You can see an example template in templates/index.html
-  #
-  # context are the variables that are passed to the template.
-  # for example, "data" key in the context variable defined below will be 
-  # accessible as a variable in index.html:
-  #
-  #     # will print: [u'grace hopper', u'alan turing', u'ada lovelace']
-  #     <div>{{data}}</div>
-  #     
-  #     # creates a <div> tag for each element in data
-  #     # will print: 
-  #     #
-  #     #   <div>grace hopper</div>
-  #     #   <div>alan turing</div>
-  #     #   <div>ada lovelace</div>
-  #     #
-  #     {% for n in data %}
-  #     <div>{{n}}</div>
-  #     {% endfor %}
-  #
-  context = dict(data = names)
-
-
-  #
-  # render_template looks in the templates/ folder for files.
-  # for example, the below file reads template/index.html
-  #
-  return render_template("index.html", **context)
+  return render_template("index.html")
 
 #
 # This is an example of a different path.  You can see it at:
@@ -162,24 +108,189 @@ def index():
 # Notice that the function name is another() rather than index()
 # The functions for each app.route need to have different names
 #
-@app.route('/another')
-def another():
-  return render_template("another.html")
+@app.route('/rank')
+def rank():
+  cursor = g.conn.execute("SELECT t.name,r.win,r.draw,r.lose,r.standing from rank r join team t on r.tid=t.tid order by r.standing desc")
+  names = []
+  for result in cursor:
+    names.append(result)  # can also be accessed using result[0]
+  cursor.close()
+  context = dict(data = names)
+  return render_template("rank.html", **context)
 
+@app.route('/topscorer', methods=['GET'])
+def topscorer():
+  cursor = g.conn.execute("SELECT tmp.name,tt.name,tmp.goal,tmp.penalty FROM (topscorer t join player p on t.pkey=p.pkey) tmp join team tt on tmp.tid=tt.tid")
+  names = []
+  for result in cursor:
+    names.append(result)  # can also be accessed using result[0]
+  cursor.close()
+  context = dict(data = names)
+  return render_template("topscorer.html", **context)
+   
+@app.route('/match', methods=['GET'])
+def match():
+  return render_template("match.html")
 
-# Example of adding new data to the database
-@app.route('/add', methods=['POST'])
-def add():
-  name = request.form['name']
-  g.conn.execute('INSERT INTO test VALUES (NULL, ?)', name)
-  return redirect('/')
+@app.route('/search_match', methods=['POST'])
+def search_match():
+  home = request.form['Home']
+  away = request.form['Away']
+  rounds = request.form['Rounds']
+  if rounds.isdigit() != True and rounds != '': 
+    return render_template("match.html")
+  if rounds != '' and home == '' and away == '':
+    cursor = g.conn.execute("SELECT m.numberofgames,h.name,m.hscore,m.ascore,a.name FROM match m, team h,team a WHERE m.home=h.tid and m.away=a.tid and m.numberofgames = %s" % (rounds))
+  elif rounds == '' and home != '' and away == '':
+    cursor = g.conn.execute("SELECT m.numberofgames,h.name,m.hscore,m.ascore,a.name FROM match m, team h,team a WHERE m.home=h.tid and m.away=a.tid and  m.home = '%s' order by m.numberofgames" % (home))
+  elif rounds == '' and home == '' and away != '':
+    cursor = g.conn.execute("SELECT m.numberofgames,h.name,m.hscore,m.ascore,a.name FROM match m, team h,team a WHERE m.home=h.tid and m.away=a.tid and m.away = '%s' order by m.numberofgames" % (away))
+  elif rounds != '' and home != '' and away == '':
+    cursor = g.conn.execute("SELECT m.numberofgames,h.name,m.hscore,m.ascore,a.name FROM match m, team h,team a WHERE m.home=h.tid and m.away=a.tid and m.numberofgames = %s and m.home = '%s' order by m.numberofgames" % (rounds, home))
+  elif rounds != '' and home == '' and away != '':
+    cursor = g.conn.execute("SELECT m.numberofgames,h.name,m.hscore,m.ascore,a.name FROM match m, team h,team a WHERE m.home=h.tid and m.away=a.tid and m.numberofgames = %s and m.away = '%s' order by m.numberofgames" % (rounds, away))
+  elif rounds == '' and home != '' and away != '':
+    cursor = g.conn.execute("SELECT m.numberofgames,h.name,m.hscore,m.ascore,a.name FROM match m, team h,team a WHERE m.home=h.tid and m.away=a.tid and m.home='%s' and m.away = '%s' order by m.numberofgames" % (home, away))
+  elif rounds != '' and home != '' and away != '':
+    cursor = g.conn.execute("SELECT m.numberofgames,h.name,m.hscore,m.ascore,a.name FROM match m, team h,team a WHERE m.home=h.tid and m.away=a.tid and m.home='%s' and m.away = '%s' and m.numberofgames=%s order by m.numberofgames" % (home, away, rounds))
+  else:
+    return render_template("match.html")
+  results = []
+  title = [u'Rounds', u'Home', u'Home score', u'Away score', u'Away']
+  results.append(title)
+  for result in cursor:
+    results.append(result)  # can also be accessed using result[0]
+  cursor.close()
+  context = dict(data = results)
+  return render_template("match.html", **context)
 
+@app.route('/team', methods=['GET'])
+def team():
+  return render_template("team.html")
 
-@app.route('/login')
-def login():
-    abort(401)
-    this_is_never_executed()
+@app.route('/search_team', methods=['POST'])
+def search_team():
+  team = request.form['Team']
+  if team == '':
+    return render_template("team.html")
+  results = []
+  cursor = g.conn.execute("SELECT t.tid,t.name,t.stadium FROM team t WHERE t.tid = '%s'" % (team))
+  title = [u'Team', u'Name', u'Stadium']
+  results.append(title)
+  for result in cursor:
+    results.append(result)
+  cursor.close()
+  
+  cursor = g.conn.execute("SELECT m.name,m.ismaincoach FROM manager m WHERE m.tid = '%s'" % (team))
+  title = [u'Caoch', u'isMainCoach']
+  results.append(title)
+  for result in cursor:
+    results.append(result)
+  cursor.close()  
 
+  cursor = g.conn.execute("SELECT p.pid,p.name,p.position,p.nationality FROM player p WHERE p.tid = '%s'" % (team))
+  title = [u'Number', u'Name', u'Position', u'Nationnality']
+  results.append(title)
+  for result in cursor:
+    results.append(result)
+  cursor.close()
+  context = dict(data = results)  
+  return render_template("team.html", **context)
+
+@app.route('/player', methods=['GET'])
+def player():
+  return render_template("player.html")
+
+@app.route('/player_information', methods=['POST'])
+def player_information():
+  nationality = request.form['Nationality']
+  team = request.form['Team']
+  number = request.form['Number']
+  position = request.form['Position']
+  if number.isdigit() != True and number != '':
+    return render_template("player.html") 
+  if nationality != '' and team == '' and number == '' and position == '':
+    cursor = g.conn.execute("SELECT p.name,p.pid,p.tid,p.position,p.nationality FROM player p WHERE p.nationality  = '%s'" % (nationality))
+  elif nationality == '' and team != '' and number == '' and position == '':
+    cursor = g.conn.execute("SELECT p.name,p.pid,p.tid,p.position,p.nationality FROM player p WHERE p.tid  = '%s'" % (team))
+  elif nationality == '' and team == '' and number != '' and position == '':
+    cursor = g.conn.execute("SELECT p.name,p.pid,p.tid,p.position,p.nationality FROM player p WHERE p.pid  = %s" % (number))
+  elif nationality == '' and team == '' and number == '' and position != '':
+    cursor = g.conn.execute("SELECT p.name,p.pid,p.tid,p.position,p.nationality FROM player p WHERE p.position  = '%s'" % (position))
+  elif nationality != '' and team != '' and number == '' and position == '':
+    cursor = g.conn.execute("SELECT p.name,p.pid,p.tid,p.position,p.nationality FROM player p WHERE p.nationality  = '%s' and p.tid  = '%s'" % (nationality,team))
+  elif nationality != '' and team == '' and number != '' and position == '':
+    cursor = g.conn.execute("SELECT p.name,p.pid,p.tid,p.position,p.nationality FROM player p WHERE p.nationality  = '%s' and p.pid  = %s" % (nationality,number))
+  elif nationality != '' and team == '' and number == '' and position != '':
+    cursor = g.conn.execute("SELECT p.name,p.pid,p.tid,p.position,p.nationality FROM player p WHERE p.nationality  = '%s' and p.position  = '%s'" % (nationality,position))
+  elif nationality == '' and team != '' and number != '' and position == '':
+    cursor = g.conn.execute("SELECT p.name,p.pid,p.tid,p.position,p.nationality FROM player p WHERE p.tid  = '%s' and p.pid  = %s" % (team,number))
+  elif nationality == '' and team != '' and number == '' and position != '':
+    cursor = g.conn.execute("SELECT p.name,p.pid,p.tid,p.position,p.nationality FROM player p WHERE p.tid  = '%s' and p.position  = '%s'" % (team,position))
+  elif nationality == '' and team == '' and number != '' and position != '':
+    cursor = g.conn.execute("SELECT p.name,p.pid,p.tid,p.position,p.nationality FROM player p WHERE p.pid  = '%s' and p.position  = '%s'" % (number,position))
+  elif nationality != '' and team != '' and number != '' and position == '':
+    cursor = g.conn.execute("SELECT p.name,p.pid,p.tid,p.position,p.nationality FROM player p WHERE p.nationality  = '%s' and p.tid  = '%s' and p.pid  = %s" % (nationality,team,number))
+  elif nationality != '' and team != '' and number == '' and position != '':
+    cursor = g.conn.execute("SELECT p.name,p.pid,p.tid,p.position,p.nationality FROM player p WHERE p.nationality  = '%s' and p.tid  = '%s' and p.position  = '%s'" % (nationality,team,position))
+  elif nationality != '' and team == '' and number != '' and position != '':
+    cursor = g.conn.execute("SELECT p.name,p.pid,p.tid,p.position,p.nationality FROM player p WHERE p.nationality  = '%s' and p.pid  = %s and p.position  = '%s'" % (nationality,number,position))
+  elif nationality == '' and team != '' and number != '' and position != '':
+    cursor = g.conn.execute("SELECT p.name,p.pid,p.tid,p.position,p.nationality FROM player p WHERE p.tid  = '%s' and p.pid  = %s and p.position  = '%s'" % (team,number,position))
+  elif nationality != '' and team != '' and number != '' and position != '':
+    cursor = g.conn.execute("SELECT p.name,p.pid,p.tid,p.position,p.nationality FROM player p WHERE p.nationality  = '%s' and p.tid  = '%s' and p.pid  = %s and p.position  = '%s'" % (nationality,team,number,position))
+  else:
+    return render_template("player.html")
+  
+  results = []
+  title = [u'Name', u'Number', u'Team', u'Position', u'Nationality']
+  results.append(title)
+  for result in cursor:
+    results.append(result)
+  cursor.close()
+  context = dict(data = results)  
+  return render_template("player.html", **context)
+
+@app.route('/player_name', methods=['POST'])
+def player_name():
+  name = request.form['Name']
+  if name == '':
+    return render_template("player.html")
+  cursor = g.conn.execute("SELECT p.name,p.pid,p.tid,p.position,p.nationality FROM player p WHERE p.name  = '%s'" % (name))
+  results = []
+  title = [u'Name', u'Number', u'Team', u'Position', u'Nationality']
+  results.append(title)
+  for result in cursor:
+    results.append(result)
+  cursor.close()
+  context = dict(data = results)  
+  return render_template("player.html", **context)
+
+@app.route('/goal', methods=['POST'])
+def goal():
+  rounds = request.form['Rounds']
+  team = request.form['Team']
+  name = request.form['Name']
+  if rounds.isdigit() != True and rounds != '': 
+    return render_template("player.html")
+  if rounds != '' and team == '' and name == '':
+    cursor = g.conn.execute("SELECT m.numberofgames, tmp.tid, tmp.name, tmp.time, tmp.isowngoal, tmp.ispenalty FROM (goal g join player p on g.pkey=p.pkey) tmp join match m on tmp.matchid=m.matchid WHERE m.numberofgames = %s " % (rounds))
+  elif rounds != '' and team != '' and name == '':
+    cursor = g.conn.execute("SELECT m.numberofgames, tmp.tid, tmp.name, tmp.time, tmp.isowngoal, tmp.ispenalty FROM (goal g join player p on g.pkey=p.pkey) tmp join match m on tmp.matchid=m.matchid WHERE tmp.tid = '%s' and m.numberofgames = %s and (m.home = '%s' or m.away = '%s') " % (team,rounds,team,team))
+  elif rounds != '' and team == '' and name != '':
+    cursor = g.conn.execute("SELECT m.numberofgames, tmp.tid, tmp.name, tmp.time, tmp.isowngoal, tmp.ispenalty FROM (goal g join player p on g.pkey=p.pkey) tmp join match m on tmp.matchid=m.matchid WHERE tmp.name = '%s' and m.numberofgames = %s" % (name,rounds))
+  elif rounds == '' and team == '' and name != '':
+    cursor = g.conn.execute("SELECT m.numberofgames, tmp.tid, tmp.name, tmp.time, tmp.isowngoal, tmp.ispenalty FROM (goal g join player p on g.pkey=p.pkey) tmp join match m on tmp.matchid=m.matchid WHERE tmp.name = '%s'" % (name))
+  else:
+    return render_template("player.html")
+  results = []
+  title = [u'Rounds', u'Team', u'Name', u'Time', u'OwnGoal', u'Penalty']
+  results.append(title)
+  for result in cursor:
+    results.append(result)
+  cursor.close()
+  context = dict(data = results)  
+  return render_template("player.html", **context)
 
 if __name__ == "__main__":
   import click
@@ -208,3 +319,4 @@ if __name__ == "__main__":
 
 
   run()
+
