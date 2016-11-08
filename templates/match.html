@@ -1,0 +1,36 @@
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+
+<body>
+  <h1>Match</h1>
+
+<form method="POST" action="/search_match">
+<p> Home:   <input type="text" name="Home">
+    Away:   <input type="text" name="Away">
+    Rounds: <input type="text" name="Rounds"> 
+            <input type="submit" value="Search"></p>
+
+<table width="80%" border="1">
+    {% for n in data %}
+    <tr>
+        {% for x in n %}
+        <td>{{x}}</td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+</table>
+
+<p><a href="/">Back to home page</a></p>
+
+
+</body>
+
+
+</html>
+

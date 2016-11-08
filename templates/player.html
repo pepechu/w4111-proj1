@@ -1,0 +1,49 @@
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+
+<body>
+  <h1>Player</h1>
+
+<form method="POST" action="/player_name">
+<p> Name:          <input type="text" name="Name">
+                   <input type="submit" value="Search"></p>
+</form>
+
+<form method="POST" action="/player_information">
+<p> Nationality:   <input type="text" name="Nationality">
+    Team:          <input type="text" name = "Team">
+    Number:        <input type="text" name="Number">
+    Position:      <input type="text" name="Position">
+                   <input type="submit" value="Search"></p>
+</form>
+
+<form method="POST" action="/goal">
+<p> Rounds:        <input type="text" name="Rounds">
+    Name:          <input type="text" name="Name">
+    Team:          <input type="text" name="Team">
+                   <input type="submit" value="Search"></p>
+</form>
+
+<table width="80%" border="1">
+    {% for n in data %}
+    <tr>
+        {% for x in n %}
+        <td>{{x}}</td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+</table>
+
+<p><a href="/">Back to home page</a></p>
+
+
+</body>
+
+
+</html>

@@ -1,0 +1,36 @@
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+
+<body>
+  <h1>Top scorer</h1>
+
+<table width="80%" border="1">
+    <tr>
+        <th>name</th>
+        <th>team</th>
+        <th>goal</th>
+        <th>penalty</th>
+    </tr>
+    {% for n in data %}
+    <tr>
+        {% for x in n %}
+        <td>{{x}}</td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+</table>
+
+<p><a href="/">Back to home page</a></p>
+
+
+</body>
+
+
+</html>
+
