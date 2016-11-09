@@ -2,11 +2,10 @@
 Project of Columbia COMS w4111 Introduction to Database Course
 COMS4111 Database Project 1.3
 
-1.2.hold personal info, omitted.
 
-3. The URL of your web application. http://40.121.160.219:8111
+1. The URL of your web application. http://40.121.160.219:8111
 
-4. Description
+2. Description
 On the hello site (home page), there are some option to choose, which would direct to another
 page. Rank of LaLiga: This gives the rank of the Spanish league of the first 7 rounds. Top scorer of LaLiga: This gives the rank of top scorer in the Spanish league of the first 7 rounds. Search for matches: Input information into the boxes to get the match information. If you leave
 everything blank, there is no result. You can input information in either box or 2, or 3 together
@@ -17,7 +16,7 @@ search for his information. You can also type nationality or team or number or p
 search specific players in the LaLiga. What’s more, you can input the rounds or name or team in
 order to search for the goals.
 
-5. Interesting operations
+3. Interesting operations
 (1).
 In the player page(http://40.121.160.219:8111/player), you can do searches within the all
 player data of the La Liga. For example, if you want to search for all Spanish goal keepers in the
