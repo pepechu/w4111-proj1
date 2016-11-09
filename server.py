@@ -35,7 +35,7 @@ app = Flask(__name__, template_folder=tmpl_dir)
 #
 #     DATABASEURI = "postgresql://gravano:foobar@w4111a.eastus.cloudapp.azure.com/proj1part2"
 #
-DATABASEURI = "postgresql://xxxx@w4111vm.eastus.cloudapp.azure.com/w4111"
+DATABASEURI = "postgresql://zw2364:6005@w4111vm.eastus.cloudapp.azure.com/w4111"
 
 
 #
@@ -277,8 +277,12 @@ def goal():
     cursor = g.conn.execute("SELECT m.numberofgames, tmp.tid, tmp.name, tmp.time, tmp.isowngoal, tmp.ispenalty FROM (goal g join player p on g.pkey=p.pkey) tmp join match m on tmp.matchid=m.matchid WHERE m.numberofgames = %s " % (rounds))
   elif rounds != '' and team != '' and name == '':
     cursor = g.conn.execute("SELECT m.numberofgames, tmp.tid, tmp.name, tmp.time, tmp.isowngoal, tmp.ispenalty FROM (goal g join player p on g.pkey=p.pkey) tmp join match m on tmp.matchid=m.matchid WHERE tmp.tid = '%s' and m.numberofgames = %s and (m.home = '%s' or m.away = '%s') " % (team,rounds,team,team))
+  elif rounds =='' and team !='' and name == '':
+    cursor = g.conn.execute("SELECT m.numberofgames, tmp.tid, tmp.name, tmp.time, tmp.isowngoal, tmp.ispenalty FROM (goal g join player p on g.pkey=p.pkey) tmp join match m on tmp.matchid=m.matchid WHERE tmp.tid = '%s' and (m.home = '%s' or m.away = '%s') " % (team,team,team))
   elif rounds != '' and team == '' and name != '':
     cursor = g.conn.execute("SELECT m.numberofgames, tmp.tid, tmp.name, tmp.time, tmp.isowngoal, tmp.ispenalty FROM (goal g join player p on g.pkey=p.pkey) tmp join match m on tmp.matchid=m.matchid WHERE tmp.name = '%s' and m.numberofgames = %s" % (name,rounds))
+  elif rounds != '' and team != '' and name != '':
+    cursor = g.conn.execute("SELECT m.numberofgames, tmp.tid, tmp.name, tmp.time, tmp.isowngoal, tmp.ispenalty FROM (goal g join player p on g.pkey=p.pkey) tmp join match m on tmp.matchid=m.matchid WHERE tmp.name = '%s' and tmp.tid = '%s' and m.numberofgames = %s and (m.home = '%s' or m.away = '%s') " % (name,team,rounds,team,team))
   elif rounds == '' and team == '' and name != '':
     cursor = g.conn.execute("SELECT m.numberofgames, tmp.tid, tmp.name, tmp.time, tmp.isowngoal, tmp.ispenalty FROM (goal g join player p on g.pkey=p.pkey) tmp join match m on tmp.matchid=m.matchid WHERE tmp.name = '%s'" % (name))
   else:
